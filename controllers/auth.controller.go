@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wpcodevo/golang-gorm-postgres/initializers"
-	"github.com/wpcodevo/golang-gorm-postgres/models"
-	"github.com/wpcodevo/golang-gorm-postgres/utils"
+	"github.com/peymanh/sms_gateway/initializers"
+	"github.com/peymanh/sms_gateway/models"
+	"github.com/peymanh/sms_gateway/utils"
+
 	"gorm.io/gorm"
 )
 
