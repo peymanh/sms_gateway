@@ -42,6 +42,7 @@ func (pc *SMSController) SendSMS(ctx *gin.Context) {
 			Body:      payload.Body,
 			Language:  payload.Language,
 			Receiver:  payload.Receiver,
+			Cost:      SMS_COST,
 			User:      currentUser,
 			UserID:    currentUser.ID,
 			CreatedAt: now,
