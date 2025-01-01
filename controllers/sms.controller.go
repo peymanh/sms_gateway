@@ -55,6 +55,7 @@ func (pc *SMSController) SendSMS(ctx *gin.Context) {
 			return
 		}
 
+		// calling go routine to send SMS to the receiver asynchronously
 		go pc.SMSService.SendSMS(ctx, &currentUser, &newSMSLog, payload.Receiver, payload.Body, payload.Language)
 
 		ctx.JSON(http.StatusCreated, gin.H{"status": "success", "data": newSMSLog})

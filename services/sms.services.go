@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/peymanh/sms_gateway/models"
+	"golang.org/x/exp/rand"
 	"gorm.io/gorm"
 )
 
 var (
-	normalChan  = make(chan bool, 200)
-	premiumChan = make(chan bool, 500)
+	normalChan  = make(chan models.SMSResultStatus, 200)
+	premiumChan = make(chan models.SMSResultStatus, 500)
 )
 
 type SMSService struct {
@@ -24,7 +25,7 @@ func NewSMSService(DB *gorm.DB) *SMSService {
 
 func (s *SMSService) SendSMS(ctx context.Context, user *models.User, log *models.SMSLog, receiver string, body string, language string) error {
 	// Create a channel to receive the status
-	var statusChan chan bool
+	var statusChan chan models.SMSResultStatus
 	switch user.Class {
 	case models.UserTypeNormal:
 		statusChan = normalChan // Buffer of size 200 for normal users
@@ -35,26 +36,29 @@ func (s *SMSService) SendSMS(ctx context.Context, user *models.User, log *models
 	}
 
 	// Launch a goroutine for asynchronous SMS sending
-	go func(receiver string, body string, language string, statusChan chan<- bool) {
+	go func(receiver string, body string, language string, statusChan chan<- models.SMSResultStatus) {
 		defer close(statusChan) // Close the channel when done
 
 		// Simulate SMS sending with a delay
 		time.Sleep(time.Second * 2)
 
 		// Decide on mock SMS status (success/failure)
-		success := true // Change this for testing failure
-
-		if success {
-			statusChan <- true
+		randomFloat := rand.Float64()
+		var state models.SMSResultStatus
+		if randomFloat < 0.9 {
+			state = models.SMSResultSuccess
 		} else {
-			statusChan <- false
+			state = models.SMSResultFailed
 		}
+
+		statusChan <- state
 	}(receiver, body, language, statusChan)
 
 	// Handle potential context cancellation
 	select {
 	case <-ctx.Done():
-		log.Status = false
+		log.Status = models.SMSResultError
+		log.ErrorMessage = ctx.Err().Error()
 		s.DB.Save(log)
 		return ctx.Err()
 	case state := <-statusChan:
