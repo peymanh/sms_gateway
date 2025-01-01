@@ -105,8 +105,39 @@ type User struct {
 	UpdatedAt time.Time `gorm:"not null"`
 }
 ```
-We have defined two type of users: `Normal` and `Premium`
+We have defined two type of users: `Normal` and `Premium`.
 
+>NOTE: we have simply implemented the Update Balance to increase the balance with a specific `amount`.
+> Of course the real update balance service must use a banking gateway, so we have avoided those complexities.
+
+### SMS Log Model
+
+```go
+
+type SMSResultStatus int
+
+const (
+	SMSResultPending SMSResultStatus = 0
+	SMSResultSuccess SMSResultStatus = 1
+	SMSResultFailed  SMSResultStatus = 2
+	SMSResultError   SMSResultStatus = 3
+)
+
+type SMSLog struct {
+	ID           uuid.UUID       `gorm:"type:uuid;default:uuid_generate_v4();primary_key" json:"id,omitempty"`
+	Body         string          `gorm:"not null" json:"body,omitempty"`
+	Language     string          `gorm:"not null" json:"language,omitempty"`
+	Receiver     string          `gorm:"not null" json:"receiver,omitempty"`
+	Cost         int             `gorm:"not null" json:"cost,omitempty"`
+	UserID       uuid.UUID       `gorm:"not null" json:"user_id,omitempty"`
+	User         User            `gorm:"constraint:OnUpdate:CASCADE;"`
+	Status       SMSResultStatus `gorm:"not null;default:0" json:"status,omitempty"`
+	ErrorMessage string          `gorm:"not null" json:"error_message,omitempty"`
+	CreatedAt    time.Time       `gorm:"not null" json:"created_at,omitempty"`
+	UpdatedAt    time.Time       `gorm:"not null" json:"updated_at,omitempty"`
+}
+
+```
 
 
 ## Send SMS Service
@@ -118,8 +149,8 @@ This is the most important service of the project.
 When a User calls `/api/sms/send`, we follow these steps:
 1. Check if the user is authenticated.
 2. Check if he has sufficient balance.
-3. If True, A log is inserted for the sms with `Pending` status.
-4. A goroutine is dispatch to send sms. It checks the user type and according to that, sends the work to different channels
+3. If True, a log is inserted for the sms with the `Pending` status.
+4. A goroutine is dispatched to send the sms. It checks the user type and according to that, sends the job to different channels
 5. Receive the sms status (`Success` of `Failed`) and update it in DB.
 
 >Note: the size of 2 channels are different to ensure that the procedure is not blocked for the Premium users.
