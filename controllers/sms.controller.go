@@ -61,7 +61,7 @@ func (pc *SMSController) SendSMS(ctx *gin.Context) {
 		ctx.JSON(http.StatusCreated, gin.H{"status": "success", "data": newSMSLog})
 
 	} else {
-		ctx.JSON(http.StatusBadGateway, gin.H{"status": "error", "message": "Insufficeint balance"})
+		ctx.JSON(http.StatusPaymentRequired, gin.H{"status": "error", "message": "Insufficeint balance"})
 		return
 	}
 }
