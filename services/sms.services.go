@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/peymanh/sms_gateway/models"
 	"gorm.io/gorm"
 )
@@ -24,22 +23,19 @@ func NewSMSService(DB *gorm.DB) *SMSService {
 }
 
 func (s *SMSService) SendSMS(ctx context.Context, user *models.User, log *models.SMSLog, receiver string, body string, language string) error {
-	// Generate a unique ID for this SMS
-	smsID := uuid.New().String()
-
 	// Create a channel to receive the status
 	var statusChan chan bool
 	switch user.Class {
 	case models.UserTypeNormal:
-		statusChan = normalChan // Buffer of size 10 for normal users
+		statusChan = normalChan // Buffer of size 200 for normal users
 	case models.UserTypePremium:
-		statusChan = premiumChan // Buffer of size 50 for premium users
+		statusChan = premiumChan // Buffer of size 500 for premium users
 	default:
 		return errors.New("invalid user type")
 	}
 
 	// Launch a goroutine for asynchronous SMS sending
-	go func(smsID string, receiver string, body string, language string, statusChan chan<- bool) {
+	go func(receiver string, body string, language string, statusChan chan<- bool) {
 		defer close(statusChan) // Close the channel when done
 
 		// Simulate SMS sending with a delay
@@ -53,11 +49,13 @@ func (s *SMSService) SendSMS(ctx context.Context, user *models.User, log *models
 		} else {
 			statusChan <- false
 		}
-	}(smsID, receiver, body, language, statusChan)
+	}(receiver, body, language, statusChan)
 
 	// Handle potential context cancellation
 	select {
 	case <-ctx.Done():
+		log.Status = false
+		s.DB.Save(log)
 		return ctx.Err()
 	case state := <-statusChan:
 		log.Status = state
