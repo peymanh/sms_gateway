@@ -158,6 +158,11 @@ When a User calls `/api/sms/send`, we follow these steps:
 >Note: Status of the SMS is mocked randomly. SMS gets successful with 0.9 probability.
 
 
+# Test
+
+The Postman Collection is added to the project. After running the project according to the described steps above,
+you can simply test the APIs.
+
 ## Stay in touch
 
 - Author - Peyman Hassanabadi
