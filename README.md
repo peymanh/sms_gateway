@@ -6,7 +6,7 @@ This is SMS Gateway Golang project, done as the code challenge of ArvanCloud int
 | Name                  | Version |
 |-----------------------|---------|
 | Go                    | 1.22.0  |
-| Postgre DB            | 4.2.17  |
+| Postgre DB            | 15.10  |
 | Docker                | 23.0.5  |
 
 
