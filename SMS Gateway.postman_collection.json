@@ -206,7 +206,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"amount\": 50\n}",
+					"raw": "{\n    \"body\": \"asdasdasd\",\n    \"language\": \"en\",\n    \"receiver\": \"09120233968\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -214,17 +214,15 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:8000/api/users/balance/update/",
+					"raw": "localhost:8000/api/sms/send",
 					"host": [
 						"localhost"
 					],
 					"port": "8000",
 					"path": [
 						"api",
-						"users",
-						"balance",
-						"update",
-						""
+						"sms",
+						"send"
 					]
 				},
 				"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
@@ -249,7 +247,7 @@
 				}
 			],
 			"request": {
-				"method": "POST",
+				"method": "GET",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -261,17 +259,15 @@
 					}
 				},
 				"url": {
-					"raw": "localhost:8000/api/users/balance/update/",
+					"raw": "localhost:8000/api/sms/logs",
 					"host": [
 						"localhost"
 					],
 					"port": "8000",
 					"path": [
 						"api",
-						"users",
-						"balance",
-						"update",
-						""
+						"sms",
+						"logs"
 					]
 				},
 				"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
