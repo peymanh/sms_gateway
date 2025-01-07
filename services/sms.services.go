@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/peymanh/sms_gateway/models"
@@ -11,12 +12,17 @@ import (
 )
 
 var (
-	normalChan  = make(chan models.SMSResultStatus, 200)
-	premiumChan = make(chan models.SMSResultStatus, 500)
+	normalChan  = make(chan MockedResponse, 200)
+	premiumChan = make(chan MockedResponse, 500)
 )
 
 type SMSService struct {
 	DB *gorm.DB
+}
+
+type MockedResponse struct {
+	SMS    *models.SMSLog
+	Status models.SMSResultStatus
 }
 
 func NewSMSService(DB *gorm.DB) *SMSService {
@@ -25,7 +31,7 @@ func NewSMSService(DB *gorm.DB) *SMSService {
 
 func (s *SMSService) SendSMS(ctx context.Context, user *models.User, log *models.SMSLog, receiver string, body string, language string) error {
 	// Create a channel to receive the status
-	var statusChan chan models.SMSResultStatus
+	var statusChan chan MockedResponse
 	switch user.Class {
 	case models.UserTypeNormal:
 		statusChan = normalChan // Buffer of size 200 for normal users
@@ -36,8 +42,8 @@ func (s *SMSService) SendSMS(ctx context.Context, user *models.User, log *models
 	}
 
 	// Launch a goroutine for asynchronous SMS sending
-	go func(receiver string, body string, language string, statusChan chan<- models.SMSResultStatus) {
-		defer close(statusChan) // Close the channel when done
+	go func(log *models.SMSLog, receiver string, body string, language string, statusChan chan<- MockedResponse) {
+		// defer close(statusChan) // Close the channel when done
 
 		// Simulate SMS sending with a delay
 		time.Sleep(time.Second * 2)
@@ -50,9 +56,13 @@ func (s *SMSService) SendSMS(ctx context.Context, user *models.User, log *models
 		} else {
 			state = models.SMSResultFailed
 		}
+		m := MockedResponse{
+			SMS:    log,
+			Status: state,
+		}
 
-		statusChan <- state
-	}(receiver, body, language, statusChan)
+		statusChan <- m
+	}(log, receiver, body, language, statusChan)
 
 	// Handle potential context cancellation
 	select {
@@ -61,9 +71,27 @@ func (s *SMSService) SendSMS(ctx context.Context, user *models.User, log *models
 		log.ErrorMessage = ctx.Err().Error()
 		s.DB.Save(log)
 		return ctx.Err()
-	case state := <-statusChan:
-		log.Status = state
-		s.DB.Save(log)
-		return nil
+	}
+	return nil
+}
+
+func (s *SMSService) Listen() {
+	for {
+		if response, ok := <-normalChan; ok {
+			sms := response.SMS
+			log.Printf("normal chan received SMS:  %v", sms)
+			sms.Status = response.Status
+			s.DB.Save(response.SMS)
+			continue
+		}
+
+		// Check if there's a message on premiumChan
+		if response, ok := <-premiumChan; ok {
+			sms := response.SMS
+			log.Printf("normal chan received SMS:  %v", sms)
+			sms.Status = response.Status
+			s.DB.Save(response.SMS)
+			continue
+		}
 	}
 }

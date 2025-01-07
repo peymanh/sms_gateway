@@ -20,6 +20,7 @@ var (
 	UserController      controllers.UserController
 	UserRouteController routes.UserRouteController
 
+	SmsService         *services.SMSService
 	SMSController      controllers.SMSController
 	SMSRouteController routes.SMSRouteController
 )
@@ -38,8 +39,8 @@ func init() {
 	UserController = controllers.NewUserController(initializers.DB)
 	UserRouteController = routes.NewRouteUserController(UserController)
 
-	smsService := services.NewSMSService(initializers.DB)
-	SMSController = controllers.NewSMSController(initializers.DB, smsService)
+	SmsService := services.NewSMSService(initializers.DB)
+	SMSController = controllers.NewSMSController(initializers.DB, SmsService)
 	SMSRouteController = routes.NewRouteSMSController(SMSController)
 
 	server = gin.Default()
@@ -62,7 +63,7 @@ func main() {
 		message := "Welcome to Golang with Gorm and Postgres"
 		ctx.JSON(http.StatusOK, gin.H{"status": "success", "message": message})
 	})
-
+	go SMSController.SMSService.Listen()
 	AuthRouteController.AuthRoute(router)
 	UserRouteController.UserRoute(router)
 	SMSRouteController.SMSRoute(router)
